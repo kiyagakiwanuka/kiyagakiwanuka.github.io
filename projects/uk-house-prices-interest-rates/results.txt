@@ -1,0 +1,38 @@
+Period: 2005-01 to 2026-07
+UK average price: £138,759 -> £272,611 (96.5% nominal)
+Peak average price: £272,611 in 2026-07
+Max YoY growth: 13.6% (2022-07); min YoY: -15.6% (2009-02)
+Corr(HPI YoY, 12m change in Bank Rate lagged 0m) = 0.48
+Corr(HPI YoY, 12m change in Bank Rate lagged 6m) = 0.01
+Corr(HPI YoY, 12m change in Bank Rate lagged 12m) = -0.24
+Corr(HPI YoY, 12m change in Bank Rate lagged 18m) = -0.16
+Corr(HPI YoY, 12m change in Bank Rate lagged 24m) = 0.02
+OLS hpi_yoy ~ rate_chg_12m_lag12 (HAC SE): coef=-0.90 pp per 1pp rate change, p=0.002, R2=0.05, n=259
+Tightening Dec-2021->Aug-2023: Bank Rate 0.17% -> 5.23%
+Recorded sales volume 2022: 1,045,618; 2023: 779,338 (-25.5%) [recent months subject to revision]
+
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:                hpi_yoy   R-squared:                       0.050
+Model:                            OLS   Adj. R-squared:                  0.046
+Method:                 Least Squares   F-statistic:                     9.858
+Date:                Thu, 22 Oct 2026   Prob (F-statistic):            0.00189
+Time:                        14:56:53   Log-Likelihood:                -787.51
+No. Observations:                 259   AIC:                             1579.
+Df Residuals:                     257   BIC:                             1586.
+Df Model:                           1                                         
+Covariance Type:                  HAC                                         
+======================================================================================
+                         coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------------
+Intercept              3.4803      0.994      3.502      0.000       1.533       5.428
+rate_chg_12m_lag12    -0.8972      0.286     -3.140      0.002      -1.457      -0.337
+==============================================================================
+Omnibus:                       79.745   Durbin-Watson:                   0.061
+Prob(Omnibus):                  0.000   Jarque-Bera (JB):              206.132
+Skew:                          -1.409   Prob(JB):                     1.73e-45
+Kurtosis:                       6.341   Cond. No.                         1.29
+==============================================================================
+
+Notes:
+[1] Standard Errors are heteroscedasticity and autocorrelation robust (HAC) using 12 lags and without small sample correction
