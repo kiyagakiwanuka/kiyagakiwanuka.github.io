@@ -83,7 +83,8 @@ def data_page(nw):
 <h2>Code &amp; data</h2><p>{links}</p><p class="back"><a href="../../index.html#data">← Back to Data projects</a></p></article>"""
     return page(nw["t"], b, 2)
 def card(href, title, text, sk):
-    return f'<a class="card" href="{href}"><h3>{esc(title)}</h3><p>{esc(text)}</p>{tags(sk[:3])}</a>'
+    sl = href.split("/")[-1].replace(".html","") if href.startswith("projects-detail") else href.split("/")[1]
+    return f'<a class="card" data-slug="{sl}" href="{href}"><h3>{esc(title)}</h3><p>{esc(text)}</p>{tags(sk[:3])}</a>'
 def oneline(it):
     s=sents(it["summary"])[0]; return s if len(s)<150 else s[:147].rsplit(" ",1)[0]+"…"
 def grid(ns): return '<div class="grid">'+"".join(card(f"projects-detail/{slug(n)}.html", ITEMS[n]["title"], oneline(ITEMS[n]), ITEMS[n]["skills"]) for n in ns)+"</div>"
@@ -103,7 +104,7 @@ def index():
 <div class="job"><h3>Education</h3>{ul(["MSc Sport Business Management, Sheffield Hallam University","BSc Economics, University of Hertfordshire"])}</div>""",
      "contact": f"""<h2>Contact</h2><p>Open to data, business, economic and financial analyst roles.</p><div class="cta"><a class="btn solid" href="mailto:{EMAIL}">{EMAIL}</a><a class="btn solid ghostl" href="{LI}">linkedin.com/in/kiyagakiwanuka</a></div>"""}
     body = "<div class='wrap panels'>"+"".join(f'<section id="tab-{k}" data-tab="{k}" class="panel">{panels[k]}</section>' for k,_ in TABS)+"</div>"
-    js = """<script>(function(){var ids=[...document.querySelectorAll('.panel')].map(p=>p.dataset.tab);function show(){var h=location.hash.slice(1);if(ids.indexOf(h)<0)h='about';document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.dataset.tab===h));document.querySelectorAll('#tabs a').forEach(a=>a.classList.toggle('on',a.getAttribute('href').split('#')[1]===h));window.scrollTo(0,0);}document.documentElement.classList.add('js');window.addEventListener('hashchange',show);show();})();</script>"""
+    js = """<div id="pm" class="pm" aria-hidden="true"><div class="pm-backdrop"></div><div class="pm-dialog" role="dialog" aria-modal="true" aria-labelledby="pm-title"><button class="pm-close" type="button" aria-label="Close project details">×</button><div class="pm-body" tabindex="-1"></div></div></div><script src="assets/app.js"></script>"""
     hero = f'<section class="hero tiny"><div class="wrap"><p class="kicker">Data · Business · Economic · Financial Analyst</p><h1>Kiyaga Grace Kiwanuka</h1></div></section>'
     return page("Analyst Portfolio", hero+body, 0, js)
 os.makedirs(f"{R}/projects-detail", exist_ok=True)
