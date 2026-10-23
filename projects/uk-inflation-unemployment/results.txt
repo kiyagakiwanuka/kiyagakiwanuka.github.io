@@ -1,8 +1,0 @@
-Common monthly sample: 1995-01 to 2026-07 (n=379)
-Peak CPIH: 9.6% in 2022-10; latest CPIH 3.1%, unemployment 4.7%, Bank Rate 3.75% (2026-07)
-Peak unemployment in sample: 8.9% in 1995-01; low: 3.6% in 2022-06
-1995-2007: corr(unemployment, CPIH)=0.65, slope=0.30 pp inflation per pp unemployment
-2008-2019: corr(unemployment, CPIH)=0.36, slope=0.23 pp inflation per pp unemployment
-2020-2026: corr(unemployment, CPIH)=-0.64, slope=-3.60 pp inflation per pp unemployment
-Corr(CPIH today, Bank Rate l months later): 0m=0.05, 3m=0.10, 6m=0.14, 9m=0.18, 12m=0.21, 15m=0.23, 18m=0.23, 21m=0.21, 24m=0.18 -> strongest at 15m
-Post-2021: CPIH first above 2% in 2021-05; first Bank Rate rise month 2021-12

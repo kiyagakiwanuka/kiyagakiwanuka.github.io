@@ -43,11 +43,3 @@ CASES = [
   find=["For every 1% increase in home overcrowding, the likelihood of working from home decreased by 1.59%.","Education was identified as a key facilitator of flexible roles.","The physical home environment matters as much as individual skills, with implications for HR strategy, urban planning and social policy."],
   sk=["Econometric modelling","Coefficient interpretation","Labour market analysis","Analytical writing"]),
 ]
-NEW = [
- dict(slug="uk-house-prices-interest-rates", t="UK House Prices vs Bank Rate (2005–2026)", kicker="Python · pandas · statsmodels · Land Registry & BoE data",
-  q="How closely do UK house prices respond to Bank of England rate changes, and with what lag?", charts=["price_vs_bank_rate.png","growth_vs_rate_change.png"], files=["analysis.py","download_data.sh","results.txt","data/uk_hpi_bankrate_clean.csv"]),
- dict(slug="uk-inflation-unemployment", t="UK Inflation, Unemployment & Bank Rate (1995–2026)", kicker="Python · ONS time series · Phillips curve",
-  q="Does the UK Phillips curve still hold, and how fast does the Bank of England react to inflation?", charts=["macro_timeseries.png","phillips_curve.png"], files=["analysis.py","download_data.sh","results.txt","data/uk_macro_clean.csv"]),
- dict(slug="uk-regional-housing-sql", t="Regional House Prices with SQL (2016–2026)", kicker="SQL · SQLite · CTEs & self-joins · Land Registry data",
-  q="Which regions and property types gained most in a decade, and where are prices still below their 2022–23 peak?", charts=["regional_growth.png","flat_vs_detached.png"], files=["queries.sql","load_and_run.py","results.md","data/regional_hpi_clean.csv"]),
-]
