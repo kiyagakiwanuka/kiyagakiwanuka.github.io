@@ -38,7 +38,7 @@ CASES = [
   sk=["SQL (MySQL)","Joins & RDBMS","Data cleansing / ETL","Excel Pivot Tables","Power BI","Tableau","Descriptive statistics"]),
  dict(slug="remote-work-london", t="Socioeconomic Dynamics of Remote Work in Greater London", org="BSc Economics · University of Hertfordshire", kicker="Econometric modelling · labour market analysis",
   hl=["1% more overcrowding → 1.59% lower likelihood of WFH","Education a key facilitator of flexible work"],
-  prob="What determines who can work from home in Greater London? The project examined the role of housing conditions and education levels.",
+  prob="What determines who can work from home in Greater London?",
   appr=["Built an econometric model of the likelihood of working from home.","Interpreted coefficients on home overcrowding and education."],
   find=["For every 1% increase in home overcrowding, the likelihood of working from home decreased by 1.59%.","Education was identified as a key facilitator of flexible roles.","The physical home environment matters as much as individual skills, with implications for HR strategy, urban planning and social policy."],
   sk=["Econometric modelling","Coefficient interpretation","Labour market analysis","Analytical writing"]),

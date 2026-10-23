@@ -43,9 +43,20 @@ def find_tools(text):
         if t.lower() in text.lower() and not any(t.lower() in o.lower() for o in out): out.append(t)
     return out
 def _w(t): return set(re.findall(r"[a-z0-9]+", re.sub(r"<[^>]+>","",t).lower()))
-def _dup(t, seen): 
-    w=_w(t)
-    return any(len(w & x)/max(1,min(len(w),len(x)))>0.6 for x in seen if x)
+def _ss(t): return [x for x in re.split(r"(?<=[.!?])\s+", re.sub(r"<[^>]+>","",t)) if len(_w(x))>=4]
+def _n(t): return " ".join(sorted(_w(t)))
+def _dup(t, seen):
+    # seen: list of word-sets, one per previously rendered sentence
+    for s in _ss(t) or [t]:
+        w=_w(s)
+        if any(x and (w<=x or x<=w or len(w & x)/max(1,min(len(w),len(x)))>0.6) for x in seen): return True
+    return False
+def _add(seen, t): seen.extend(_w(s) for s in (_ss(t) or [t]))
+def CVER():
+    import glob
+    h=hashlib.md5()
+    for f in sorted(glob.glob(os.path.join(R,"projects-detail","*.html"))+glob.glob(os.path.join(R,"projects","*","index.html"))): h.update(open(f,'rb').read())
+    return h.hexdigest()[:8]
 def detail(it):
     n=it["n"]; ss=sents(it["summary"]); ws=sents(it["why"]); c=CBYSLUG.get(CURATED.get(n,""))
     E = (lambda x: x) if c else esc
@@ -59,7 +70,8 @@ def detail(it):
     seen=[]; out=[]; toc=[]
     for sid,name,kind,items in secs:
         if kind!="tags":
-            items=[x for x in items if not _dup(x,seen)]; seen+= [_w(x) for x in items]
+            items=[x for x in items if not _dup(x,seen)]
+            for x in items: _add(seen,x)
         if not items: continue
         body = tags(items) if kind=="tags" else ul(items,kind) if kind in("ul","ol") else "".join(f"<p>{x}</p>" for x in items)
         out.append(f'<h2 id="{sid}">{name}</h2>{body}'); toc.append(f'<a href="#{sid}">{name.split(" &amp;")[0]}</a>')
@@ -78,17 +90,18 @@ def md_parts(slug):
     return fs, one("**Limitations"), one("**Data"), one("**Method")
 DATA_EXTRA = {
  "uk-house-prices-interest-rates": dict(steps=["Downloaded the HM Land Registry UK HPI full file and the Bank of England monthly average Bank Rate (IUMABEDR) with <code>download_data.sh</code>.","Filtered the HPI to the United Kingdom series and merged it with Bank Rate by month (Jan 2005 – Jul 2026).","Computed year-on-year house price growth and the 12-month change in Bank Rate.","Measured cross-correlations at 0, 6, 12, 18 and 24-month lags.","Estimated an OLS regression of price growth on the 12-month-lagged rate change with Newey-West (HAC) standard errors.","Examined the 2021–23 tightening episode and annual sales volumes; produced charts with matplotlib."], tools=["Python","pandas","statsmodels","matplotlib","HM Land Registry UK HPI","Bank of England IUMABEDR"], why="Interest-rate sensitivity of asset prices matters for lenders, housebuilders, investors and policy teams; this shows why naive correlations mislead and how lag structure changes the conclusion.", skills=["Time-series analysis","Regression (OLS, HAC errors)","Data cleaning & merging","Data visualisation","Reproducible analysis"]),
- "uk-inflation-unemployment": dict(steps=["Downloaded ONS CPIH annual rate (L55O), ONS unemployment rate (MGSX) and Bank of England Bank Rate.","Parsed the ONS time-series CSV format to extract monthly observations and aligned all three series (Jan 1995 – Jul 2026, 379 months).","Split the sample into eras (1995–2007, 2008–2019, 2020–2026) and computed correlations and linear slopes of inflation on unemployment.","Computed correlations between inflation and Bank Rate 0–24 months later to gauge the policy reaction lag.","Visualised the series and an era-coloured Phillips curve scatter."], tools=["Python","pandas","numpy","matplotlib","ONS (L55O, MGSX)","Bank of England IUMABEDR"], why="Reading the inflation–labour market relationship correctly is central to macro, rates and economic-research roles; the analysis shows the trade-off is unstable across eras.", skills=["Macroeconomic analysis","Time-series data handling","Correlation analysis","Data visualisation"]),
+ "uk-inflation-unemployment": dict(steps=["Downloaded ONS CPIH annual rate (L55O), ONS unemployment rate (MGSX) and Bank of England Bank Rate.","Parsed the ONS time-series CSV format to extract monthly observations and aligned all three series on a common monthly index.","Split the sample into eras (1995–2007, 2008–2019, 2020–2026) and computed correlations and linear slopes of inflation on unemployment.","Computed correlations between inflation and Bank Rate 0–24 months later to gauge the policy reaction lag.","Visualised the series and an era-coloured Phillips curve scatter."], tools=["Python","pandas","numpy","matplotlib","ONS (L55O, MGSX)","Bank of England IUMABEDR"], why="Reading the inflation–labour market relationship correctly is central to macro, rates and economic-research roles; the analysis shows the trade-off is unstable across eras.", skills=["Macroeconomic analysis","Time-series data handling","Correlation analysis","Data visualisation"]),
  "uk-regional-housing-sql": dict(steps=["Downloaded the HM Land Registry UK HPI full file.","Filtered to the 9 English regions plus Wales, Scotland and Northern Ireland, and loaded the cleaned table into SQLite with Python.","Wrote SQL (CTEs, self-joins on date offsets, correlated subqueries, aggregation) to compare 10-year growth, flats vs detached homes, change from the 2022–23 peak, and annual sales volumes.","Exported query results to <code>results.md</code> and charted them with matplotlib."], tools=["SQL","SQLite","Python","pandas","matplotlib","HM Land Registry UK HPI"], why="Regional and property-type differences drive lending, investment and housing-policy decisions; the project shows SQL used to answer business questions end to end.", skills=["SQL (CTEs, joins, subqueries)","Data cleaning","Regional analysis","Data visualisation"]),
 }
 def data_page(nw):
     fs, lim, data, meth = md_parts(nw["slug"]); x=DATA_EXTRA[nw["slug"]]
+    seen=[]; _add(seen,data); steps=[st for st in x['steps'] if not _dup(st,seen)]
     imgs="".join(f'<figure><img src="charts/{c}" alt="{c[:-4].replace("_"," ")} chart"></figure>' for c in nw["charts"])
     links=" · ".join(f'<a href="{f}">{f}</a>' for f in nw["files"]+["README.md"])
     b=f"""<section class="hero small"><div class="wrap"><p class="kicker">Hands-on data project · {nw['kicker']}</p><h1>{nw['t']}</h1></div></section>
 <article class="wrap case"><nav class="toc"><a href="#overview">Overview</a><a href="#method">Method</a><a href="#tools">Data &amp; tools</a><a href="#findings">Findings</a><a href="#why">Why it matters</a><a href="#skills">Skills</a></nav>
-<h2 id="overview">Overview</h2><p>{meth}</p><h2 id="context">Context &amp; question</h2><p>{nw['q']}</p>
-<h2 id="method">Methodology &amp; process</h2>{ul(x['steps'],'ol')}<h2 id="tools">Data &amp; tools</h2><p>{data}</p>{tags(x['tools'])}
+<h2 id="overview">Overview</h2><p>{nw['q']}</p>
+<h2 id="method">Methodology &amp; process</h2>{ul(steps,'ol')}<h2 id="tools">Data &amp; tools</h2><p>{data}</p>{tags(x['tools'])}
 <h2 id="findings">Findings &amp; outcomes</h2>{ul(fs)}{imgs}<p><strong>Limitations:</strong> {lim}</p>
 <h2 id="why">Why it matters</h2><p>{x['why']}</p><h2 id="skills">Skills gained</h2>{tags(x['skills'])}
 <h2>Code &amp; data</h2><p>{links}</p><p class="back"><a href="../../index.html#data">← Back to Data projects</a></p></article>"""
@@ -115,12 +128,12 @@ def index():
 <div class="job"><h3>Education</h3>{ul(["MSc Sport Business Management, Sheffield Hallam University","BSc Economics, University of Hertfordshire"])}</div>""",
      "contact": f"""<h2>Contact</h2><p>Open to data, business, economic and financial analyst roles.</p><div class="cta"><a class="btn solid" href="mailto:{EMAIL}">{EMAIL}</a><a class="btn solid ghostl" href="{LI}">linkedin.com/in/kiyagakiwanuka</a></div>"""}
     body = "<div class='wrap panels'>"+"".join(f'<section id="tab-{k}" data-tab="{k}" class="panel">{panels[k]}</section>' for k,_ in TABS)+"</div>"
-    js = """<style>"""+MODAL_CSS+"""</style><div id="pm" class="pm" aria-hidden="true" hidden><div class="pm-backdrop"></div><div class="pm-dialog" role="dialog" aria-modal="true" aria-labelledby="pm-title"><button class="pm-close" type="button" aria-label="Close project details">×</button><div class="pm-body" tabindex="-1"></div></div></div><script src="assets/app.js?v="""+VER+""""></script>"""
+    js = """<style>"""+MODAL_CSS+"""</style><div id="pm" class="pm" data-v="@@CVER@@" aria-hidden="true" hidden><div class="pm-backdrop"></div><div class="pm-dialog" role="dialog" aria-modal="true" aria-labelledby="pm-title"><button class="pm-close" type="button" aria-label="Close project details">×</button><div class="pm-body" tabindex="-1"></div></div></div><script src="assets/app.js?v="""+VER+""""></script>"""
     hero = f'<section class="hero tiny"><div class="wrap"><p class="kicker">Data · Business · Economic · Financial Analyst</p><h1>Kiyaga Grace Kiwanuka</h1></div></section>'
     return page("Analyst Portfolio", hero+body, 0, js)
 os.makedirs(f"{R}/projects-detail", exist_ok=True)
 for f in os.listdir(f"{R}/projects-detail"): os.remove(f"{R}/projects-detail/{f}")
 for n,it in ITEMS.items(): open(f"{R}/projects-detail/{slug(n)}.html","w").write(detail(it))
 for nw in NEW: open(f"{R}/projects/{nw['slug']}/index.html","w").write(data_page(nw))
-open(f"{R}/index.html","w").write(index())
+open(f"{R}/index.html","w").write(index().replace("@@CVER@@",CVER()))
 print("built", len(ITEMS), "detail pages")

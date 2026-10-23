@@ -29,7 +29,7 @@
       var h1=box.querySelector('h1'); if(h1){h1.id='pm-title'}; box.scrollTop=0;
       box.insertAdjacentHTML('beforeend','<p class="pm-full"><a href="'+url+'">Open as full page ↗</a></p>'); };
     if(cache[url]) return done(cache[url]);
-    fetch(url).then(function(r){return r.text()}).then(function(t){cache[url]=t;done(t)}).catch(function(){location.href=url});
+    fetch(url+(modal.dataset.v?'?v='+modal.dataset.v:''),{cache:'no-cache'}).then(function(r){return r.text()}).then(function(t){cache[url]=t;done(t)}).catch(function(){location.href=url});
   }
   function close(push){ modal.classList.remove('open'); modal.hidden=true; modal.setAttribute('aria-hidden','true'); d.body.classList.remove('noscroll');
     if(push!==false) history.replaceState(null,'','#'+cur); if(lastFocus) lastFocus.focus(); }
