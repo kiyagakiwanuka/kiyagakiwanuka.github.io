@@ -20,7 +20,7 @@
     var back=t.querySelector('.back'); if(back) back.remove(); return t.innerHTML; }
   function open(card,push){
     lastFocus=card; var url=new URL(card.getAttribute('href'),location.href).href;
-    box.innerHTML='<p class="pm-loading">Loading…</p>'; modal.classList.add('open'); modal.setAttribute('aria-hidden','false');
+    box.innerHTML='<p class="pm-loading">Loading…</p>'; modal.hidden=false; modal.classList.add('open'); modal.setAttribute('aria-hidden','false');
     d.body.classList.add('noscroll'); modal.querySelector('.pm-close').focus();
     if(push) history.pushState(null,'','#project='+card.dataset.slug);
     var done=function(html){ var doc=new DOMParser().parseFromString(html,'text/html');
@@ -31,7 +31,7 @@
     if(cache[url]) return done(cache[url]);
     fetch(url).then(function(r){return r.text()}).then(function(t){cache[url]=t;done(t)}).catch(function(){location.href=url});
   }
-  function close(push){ modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); d.body.classList.remove('noscroll');
+  function close(push){ modal.classList.remove('open'); modal.hidden=true; modal.setAttribute('aria-hidden','true'); d.body.classList.remove('noscroll');
     if(push!==false) history.replaceState(null,'','#'+cur); if(lastFocus) lastFocus.focus(); }
   d.addEventListener('click',function(e){
     var c=e.target.closest('.card[data-slug]');

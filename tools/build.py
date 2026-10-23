@@ -5,6 +5,9 @@ import os, re, html, sys
 sys.path.insert(0, os.path.dirname(__file__)); from content import CASES, NEW
 R = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EMAIL="kiyagagrace460@gmail.com"; LI="https://www.linkedin.com/in/kiyagakiwanuka"
+import hashlib
+VER = hashlib.md5((open(os.path.join(R,"assets","style.css")).read()+open(os.path.join(R,"assets","app.js")).read()).encode()).hexdigest()[:8]
+MODAL_CSS = open(os.path.join(R,"tools","modal.css")).read().replace("\n"," ")
 SRC = open(os.path.join(R,"tools","source.md")).read()
 CURATED = dict(zip([19,1,3,14,18,25,2], ["sharks-feasibility","uk-housing-econometrics","portfolio-optimisation","everton-financials","fsa-fan-research","bi-pipeline","remote-work-london"]))
 CBYSLUG = {c["slug"]:c for c in CASES}
@@ -30,7 +33,7 @@ def page(title, body, depth, extra=""):
     nav = "".join(f'<a href="{p}index.html#{k}">{v}</a>' for k,v in TABS)
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{esc(title)} | Kiyaga Grace Kiwanuka</title><meta name="description" content="Kiyaga Grace Kiwanuka: data, business and economic analyst portfolio.">
-<link rel="stylesheet" href="{p}assets/style.css"></head><body>
+<link rel="stylesheet" href="{p}assets/style.css?v={VER}"></head><body>
 <header class="nav"><div class="wrap"><a class="brand" href="{p}index.html">Kiyaga Grace Kiwanuka</a><nav id="tabs">{nav}</nav></div></header>
 <main>{body}</main><footer><div class="wrap">© 2026 Kiyaga Grace Kiwanuka · <a href="mailto:{EMAIL}">{EMAIL}</a> · <a href="{LI}">LinkedIn</a></div></footer>{extra}</body></html>"""
 TABS = [("about","About"),("hertfordshire","Hertfordshire"),("sheffield-hallam","Sheffield Hallam"),("data","Data projects"),("simulations","Simulations"),("experience","Experience"),("contact","Contact")]
@@ -39,24 +42,32 @@ def find_tools(text):
     for t in TOOLS:
         if t.lower() in text.lower() and not any(t.lower() in o.lower() for o in out): out.append(t)
     return out
+def _w(t): return set(re.findall(r"[a-z0-9]+", re.sub(r"<[^>]+>","",t).lower()))
+def _dup(t, seen): 
+    w=_w(t)
+    return any(len(w & x)/max(1,min(len(w),len(x)))>0.6 for x in seen if x)
 def detail(it):
     n=it["n"]; ss=sents(it["summary"]); ws=sents(it["why"]); c=CBYSLUG.get(CURATED.get(n,""))
-    overview = ss[0]; ctx = c["prob"] if c else ss[0]
-    steps = c["appr"] if c else (ss[1:] or ss)
-    findings = c["find"] if c else ws[:1]
-    why = (ws[-1:] if n==19 else ws) if c else (ws[1:] or ws)
-    tools = find_tools(it["summary"]+" "+it["why"])
+    E = (lambda x: x) if c else esc
+    secs = [("overview","Overview","p",[esc(ss[0])]),
+            ("context","Context &amp; question","p",[c["prob"]] if c else []),
+            ("method","Methodology &amp; process","ol",[E(x) for x in (c["appr"] if c else ss[1:])]),
+            ("tools","Data &amp; tools","tags",find_tools(it["summary"]+" "+it["why"])),
+            ("findings","Findings &amp; outcomes","ul",[E(x) for x in (c["find"] if c else ws[:1])]),
+            ("why","Why it matters","p",[esc(x) for x in (ws if c else ws[1:])]),
+            ("skills","Skills gained","tags",it["skills"])]
+    seen=[]; out=[]; toc=[]
+    for sid,name,kind,items in secs:
+        if kind!="tags":
+            items=[x for x in items if not _dup(x,seen)]; seen+= [_w(x) for x in items]
+        if not items: continue
+        body = tags(items) if kind=="tags" else ul(items,kind) if kind in("ul","ol") else "".join(f"<p>{x}</p>" for x in items)
+        out.append(f'<h2 id="{sid}">{name}</h2>{body}'); toc.append(f'<a href="#{sid}">{name.split(" &amp;")[0]}</a>')
     hl = "".join(f"<div>{h}</div>" for h in c["hl"]) if c else ""
     g=group(n); back=f"../index.html#{g}"
     b=f"""<section class="hero small"><div class="wrap"><p class="kicker">{GROUPNAME[g]}</p><h1>{esc(it['title'])}</h1>{'<div class="stats">'+hl+'</div>' if hl else ''}</div></section>
-<article class="wrap case"><nav class="toc"><a href="#overview">Overview</a><a href="#context">Context</a><a href="#method">Method</a><a href="#tools">Data &amp; tools</a><a href="#findings">Outcomes</a><a href="#why">Why it matters</a><a href="#skills">Skills</a></nav>
-<h2 id="overview">Overview</h2><p>{esc(overview)}</p>
-<h2 id="context">Context &amp; question</h2><p>{esc(ctx) if not c else ctx}</p>
-<h2 id="method">Methodology &amp; process</h2>{ul([s if c else esc(s) for s in steps],"ol")}
-<h2 id="tools">Data &amp; tools</h2>{tags(tools) if tools else '<p>Academic and secondary literature research.</p>'}
-<h2 id="findings">Findings &amp; outcomes</h2>{ul([f if c else esc(f) for f in findings])}
-<h2 id="why">Why it matters</h2>{''.join(f'<p>{esc(w)}</p>' for w in why)}
-<h2 id="skills">Skills gained</h2>{tags(it['skills'])}
+<article class="wrap case"><nav class="toc">{''.join(toc)}</nav>
+{''.join(out)}
 <p class="back"><a href="{back}">← Back to {dict(TABS)[g]}</a></p></article>"""
     return page(it["title"], b, 1)
 def md_parts(slug):
@@ -104,7 +115,7 @@ def index():
 <div class="job"><h3>Education</h3>{ul(["MSc Sport Business Management, Sheffield Hallam University","BSc Economics, University of Hertfordshire"])}</div>""",
      "contact": f"""<h2>Contact</h2><p>Open to data, business, economic and financial analyst roles.</p><div class="cta"><a class="btn solid" href="mailto:{EMAIL}">{EMAIL}</a><a class="btn solid ghostl" href="{LI}">linkedin.com/in/kiyagakiwanuka</a></div>"""}
     body = "<div class='wrap panels'>"+"".join(f'<section id="tab-{k}" data-tab="{k}" class="panel">{panels[k]}</section>' for k,_ in TABS)+"</div>"
-    js = """<div id="pm" class="pm" aria-hidden="true"><div class="pm-backdrop"></div><div class="pm-dialog" role="dialog" aria-modal="true" aria-labelledby="pm-title"><button class="pm-close" type="button" aria-label="Close project details">×</button><div class="pm-body" tabindex="-1"></div></div></div><script src="assets/app.js"></script>"""
+    js = """<style>"""+MODAL_CSS+"""</style><div id="pm" class="pm" aria-hidden="true" hidden><div class="pm-backdrop"></div><div class="pm-dialog" role="dialog" aria-modal="true" aria-labelledby="pm-title"><button class="pm-close" type="button" aria-label="Close project details">×</button><div class="pm-body" tabindex="-1"></div></div></div><script src="assets/app.js?v="""+VER+""""></script>"""
     hero = f'<section class="hero tiny"><div class="wrap"><p class="kicker">Data · Business · Economic · Financial Analyst</p><h1>Kiyaga Grace Kiwanuka</h1></div></section>'
     return page("Analyst Portfolio", hero+body, 0, js)
 os.makedirs(f"{R}/projects-detail", exist_ok=True)
