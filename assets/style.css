@@ -23,3 +23,15 @@ figure{margin:20px 0}figure img{max-width:100%;border:1px solid var(--line);bord
 .job{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px 22px;margin-bottom:14px}.job h3{margin:0}.job .sub{color:var(--muted);margin:0}
 .back{margin-top:30px}footer{margin-top:60px;padding:24px 0;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem;background:#fff}
 @media(max-width:600px){nav a{margin-left:10px;font-size:.85rem}.nav .wrap{height:auto;padding:10px 20px}.hero{padding:50px 0}.case{padding:20px}}
+/* v2: tabs & panels */
+.nav .wrap{gap:10px}#tabs{display:flex;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}#tabs::-webkit-scrollbar{display:none}
+#tabs a{white-space:nowrap;padding:6px 10px;margin:0;border-radius:6px}#tabs a.on{background:#e8f0f8;color:var(--accent);font-weight:600}
+.hero.tiny{padding:26px 0 22px}.hero.tiny h1{font-size:clamp(1.5rem,3.5vw,2.2rem);margin:.1em 0 0}
+.panels{padding-top:24px}.panel{padding-bottom:10px}.js .panel{display:none}.js .panel.active{display:block}
+.panel h2 span{display:block;font-size:.95rem;font-weight:500;color:var(--muted)}
+.grid{grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}.card{padding:16px}.card h3{font-size:1rem;margin:0 0 4px}.card p{font-size:.88rem;margin:0 0 10px}.card .tags{margin-top:auto}.card .tags span{font-size:.75rem;padding:3px 8px}
+.about{display:grid;grid-template-columns:1.1fr 1fr;gap:24px;align-items:start}.about .lead{font-size:1.1rem;margin-top:0}.about .sub{color:var(--muted)}.about .skills{grid-template-columns:1fr}
+.about .btn,.btn.solid{background:var(--accent);color:#fff;border-color:var(--accent)}.about .btn.ghost,.btn.ghostl{background:#fff;color:var(--accent)}
+.toc{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}.toc a{font-size:.8rem;background:#e8f0f8;padding:3px 10px;border-radius:999px;text-decoration:none}
+.case ol li,.case ul li{margin-bottom:6px}.case h2{scroll-margin-top:80px}footer{margin-top:40px}
+@media(max-width:800px){.about{grid-template-columns:1fr}.nav .wrap{flex-direction:column;align-items:flex-start;height:auto;padding:8px 20px}#tabs{width:100%}#tabs a{font-size:.85rem}}

@@ -1,139 +1,114 @@
-"""Generates the static HTML pages. Run: python3 tools/build.py (output is committed; no build step needed for hosting)."""
-import os, html
+"""Generates all static pages from tools/source.md (the skills file, minus excluded items) + tools/content.py.
+Run: python3 tools/build.py   (output is committed; hosting needs no build step)
+Future: add a 'Passion projects / Skills highlights' tab by appending to TABS and writing its panel in index()."""
+import os, re, html, sys
+sys.path.insert(0, os.path.dirname(__file__)); from content import CASES, NEW
 R = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EMAIL="kiyagagrace460@gmail.com"; LI="https://www.linkedin.com/in/kiyagakiwanuka"
-def page(title, body, depth):
+SRC = open(os.path.join(R,"tools","source.md")).read()
+CURATED = dict(zip([19,1,3,14,18,25,2], ["sharks-feasibility","uk-housing-econometrics","portfolio-optimisation","everton-financials","fsa-fan-research","bi-pipeline","remote-work-london"]))
+CBYSLUG = {c["slug"]:c for c in CASES}
+SHORT = {1:"Housing market econometrics",2:"Remote work in Greater London",3:"Portfolio investment & risk",4:"Classical vs neo-classical trade theory",5:"AI and the demand for labour",6:"Global value chains",7:"Macroeconomic performance",8:"Inflation shocks & central banks",9:"Cost-of-living crisis briefing",10:"Political economy of climate change",11:"State investment banks",12:"Infant industry protection",13:"Neoclassical economics & water",14:"Everton FC financial performance",15:"Forest Green Rovers strategy",16:"Chief People Officer perspective",17:"Johari Window leadership",18:"FSA non-league fan research",19:"Sheffield Sharks feasibility study",20:"BCG: Data for Decision Makers",21:"Deloitte: Data Analytics",22:"Tata: Data Visualisation",23:"BCG: Strategy Consulting",25:"Data analytics & BI pipeline"}
+TOOLS = ["MySQL Workbench","Excel Solver","Excel","Pivot Tables","Power BI","PowerBI","Tableau","Office for National Statistics (ONS)","ONS Census 2021","Bank of England","Companies House","Sport England","matrix algebra","efficient frontier","Sharpe Ratio","PESTEL","Porter's Five Forces","VRIO","Segmentation, Targeting, and Positioning (STP)","AIDA model","Technology Acceptance Model","Phillips Curve","Task-Based Model","argument map","Johari Window","Goleman’s Emotional Intelligence framework","Emotional Intelligence (EI) models","Ricardian","Heckscher-Ohlin","smile curve","weighted multi-criteria decision analysis","contribution-margin model","ROCE","Current Ratio","Gearing","regression","econometric modeling","thematic analysis","survey"]
+def parse():
+    items = {}
+    for m in re.finditer(r"### (\d+)\. (.+?)\n(.*?)(?=\n### |\n---|\Z)", SRC, re.S):
+        n = int(m.group(1)); body = m.group(3)
+        g = lambda k: (re.search(r"\*\*"+k+r"\*\*:\s*(.+)", body) or [None,""])[1].strip()
+        items[n] = dict(n=n, title=m.group(2).strip(), summary=g("Summary of Project"), why=g("Why the Project is Useful and Relevant"), skills=[s.strip() for s in re.split(r",\s*(?![^()]*\))", g("Skills Gained").rstrip(".")) if s.strip()])
+    return items
+def sents(t): return [s.strip() for s in re.split(r"(?<=[.!?])\s+(?=[A-Z“\"])", t) if s.strip()]
+ITEMS = parse()
+def slug(n): return CURATED.get(n) or re.sub(r"[^a-z0-9]+","-", SHORT[n].lower()).strip("-")
+def group(n): return "hertfordshire" if n<=13 else "sheffield-hallam" if n<=19 else "simulations" if n<=23 else "data"
+GROUPNAME = {"hertfordshire":"University of Hertfordshire · BSc Economics","sheffield-hallam":"Sheffield Hallam University · MSc Sport Business Management","simulations":"Forage job simulation","data":"Technical data project"}
+def esc(s): return html.escape(s, quote=False)
+def ul(xs, tag="ul"): return f"<{tag}>"+"".join(f"<li>{x}</li>" for x in xs)+f"</{tag}>"
+def tags(xs): return '<div class="tags">'+"".join(f"<span>{esc(x)}</span>" for x in xs)+"</div>"
+def page(title, body, depth, extra=""):
     p = "../"*depth
+    nav = "".join(f'<a href="{p}index.html#{k}">{v}</a>' for k,v in TABS)
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{title} | Kiyaga Grace Kiwanuka</title><meta name="description" content="Kiyaga Grace Kiwanuka: data, business and economic analyst portfolio.">
+<title>{esc(title)} | Kiyaga Grace Kiwanuka</title><meta name="description" content="Kiyaga Grace Kiwanuka: data, business and economic analyst portfolio.">
 <link rel="stylesheet" href="{p}assets/style.css"></head><body>
-<header class="nav"><div class="wrap"><a class="brand" href="{p}index.html">Kiyaga Grace Kiwanuka</a>
-<nav><a href="{p}index.html#projects">Projects</a><a href="{p}index.html#skills">Skills</a><a href="{p}index.html#experience">Experience</a><a href="{p}index.html#contact">Contact</a></nav></div></header>
-<main>{body}</main><footer><div class="wrap">© 2026 Kiyaga Grace Kiwanuka · <a href="mailto:{EMAIL}">{EMAIL}</a> · <a href="{LI}">LinkedIn</a></div></footer></body></html>"""
-def ul(xs): return "<ul>"+"".join(f"<li>{x}</li>" for x in xs)+"</ul>"
-def tags(xs): return '<div class="tags">'+"".join(f"<span>{html.escape(x)}</span>" for x in xs)+"</div>"
-
-CASES = [
- dict(slug="sharks-feasibility", t="Feasibility Study: Over-40s Basketball Programme, B. Braun Sheffield Sharks", org="MSc Sport Business Management · Sheffield Hallam University · Sole consultant", kicker="Primary research · break-even modelling · decision analysis",
-  hl=["97 eligible survey responses","Break-even tested at 6 price points × 2 cost scenarios","20,000 randomised reweightings in sensitivity test"],
-  prob="A Super League Basketball club asked whether it could sustainably run a weekly recreational session for adults over 40, and whether to fund it through a Sport England grant or through participant fees.",
-  appr=["Designed and distributed a primary survey (97 eligible responses) and interviewed the founder of the only comparable provider in Sheffield.","Benchmarked court hire, sessional coaching and affiliation costs across the city.","Sized the addressable market from ONS Census 2021 data.","Traced the club's corporate structure through Companies House filings to establish which entity could apply for public money.","Built a contribution-margin model testing break-even across six price points and two cost scenarios.","Ranked the two funding pathways with weighted multi-criteria decision analysis, stress-tested against 20,000 randomised reweightings of the criteria."],
-  find=["The survey reached lapsed and current players, not the inactive adults Sport England funds: 85.6% had played basketball before and only 6.2% recorded a week without a single 30-minute bout of activity.","This contradicted the premise of the brief. The sampling limitation became the basis of the recommendation: launch commercially for the audience the evidence found, and defer the grant application to year two once a running pilot can evidence the reach a funder scores against.","Delivered a 6,000-word report with a costed launch plan, a risk register and a staged measurement framework."],
-  sk=["Survey design","Semi-structured interviews","Financial modelling","Break-even analysis","Multi-criteria decision analysis","Sensitivity testing","Companies House due diligence","ONS Census 2021","Consultancy reporting"]),
- dict(slug="uk-housing-econometrics", t="Econometric Analysis of UK Housing Market Determinants", org="BSc Economics · University of Hertfordshire", kicker="Time-series regression · ONS & Bank of England data",
-  hl=["Quarterly data, 2005–2019","Regression model explaining 95% of price variation","Multicollinearity & heteroskedasticity tests"],
-  prob="What drives UK house prices? The project tested how population density, interest rates and housing supply affect UK real estate prices.",
-  appr=["Assembled quarter-by-quarter data from the Office for National Statistics (ONS) and the Bank of England, 2005–2019.","Estimated a time-series OLS regression of house prices on population density, interest rates and housing supply.","Tested model reliability by checking for multicollinearity and heteroskedasticity, and assessed statistical significance of each determinant."],
-  find=["The regression model explained 95% of the variation in prices.","Shows how external shifts such as interest rate changes feed into asset values through supply-and-demand equilibrium."],
-  sk=["OLS regression","Significance testing","Diagnostic testing","Time-series data","Macroeconomic analysis","Quantitative research"]),
- dict(slug="portfolio-optimisation", t="Portfolio Investment & Risk Management", org="BSc Economics · Techniques of Economic Analysis · University of Hertfordshire", kicker="Modern Portfolio Theory · matrix algebra · Excel Solver",
-  hl=["5 stocks: Netflix, Amazon, Google, NVIDIA, RIO","2014–2018 returns","Efficient frontier with 10 allocations + Sharpe maximisation"],
-  prob="How should capital be allocated across five major company shares to get the best risk-adjusted return?",
-  appr=["Collected share data for Netflix, Amazon, Google, NVIDIA and RIO from 2014 to 2018.","Used matrix algebra to calculate the return and risk of an equally weighted portfolio.","Constructed an efficient frontier from 10 different allocation weights.","Used Excel Solver (linear programming) to find the allocation that maximises the Sharpe Ratio."],
-  find=["Visualised the risk/return trade-off across allocations with the efficient frontier.","Identified the Sharpe-maximising allocation as the optimal risk-adjusted portfolio."],
-  sk=["Financial modelling","Excel Solver","Linear programming","Matrix algebra","Modern Portfolio Theory","Risk-return analysis"]),
- dict(slug="everton-financials", t="Business & Financial Performance Report: Everton FC", org="MSc Sport Business Management · Sheffield Hallam University", kicker="Corporate financial analysis · ratios · benchmarking",
-  hl=["Five-year review, 2020–2025","ROCE, Current Ratio, Gearing","4,000-word corporate report"],
-  prob="How financially healthy and structurally stable is Everton FC, given ownership changes, stadium construction and Premier League Profit & Sustainability Rules (PSR)?",
-  appr=["Analysed five years of financial performance (2020–2025).","Calculated and benchmarked ratios including ROCE, Current Ratio and Gearing.","Evaluated ownership transitions, matchday ticket price inelasticity and wage-to-turnover trajectories.","Assessed capital efficiency relating to the new stadium construction."],
-  find=["Exposed core operating losses in the club's business.","Set out how competitive spending must be balanced with financial discipline under PSR, and how stadium commercialisation and private equity takeovers affect sustainability."],
-  sk=["Ratio analysis","Financial statement analysis","Corporate benchmarking","Applied economic theory","Data visualisation","Strategic reporting"]),
- dict(slug="fsa-fan-research", t="Non-League Football Marketing & Communication: \"Who's Your Real Team?\"", org="MSc Sport Business Management · Consulting report for the Football Supporters' Association · Lead Operations", kicker="Mixed-methods research · digital audits · thematic coding",
-  hl=["12 regional clubs audited","Face-to-face interviews with fans & volunteers","Best Practice Toolkit for club executives"],
-  prob="Why does online reach at non-league clubs fail to convert into gate attendance, and what low-cost actions can close that gap?",
-  appr=["Ran primary face-to-face qualitative interviews with fans and volunteers.","Carried out cross-platform digital audits across twelve regional clubs.","Deep-dived the operations of Worsbrough Bridge AFC, Maltby Main FC and Penistone Church FC to isolate the \"digital-to-physical action gap\".","Thematically coded Sheffield FC primary data into themes such as \"Grassroots Intimacy\" vs \"Professional Disillusionment\", using the AIDA model and Technology Acceptance Model, and integrated it with quantitative ground-experience scores."],
-  find=["Identified where online reach fails to convert into attendance.","Delivered a low-cost Best Practice Toolkit: brand perception audits, mobile-first design optimisation and tactical scheduling to attract disillusioned Football League fans."],
-  sk=["Qualitative interviewing","Thematic analysis & coding","Digital audit","Conversion analysis","AIDA / TAM frameworks","Strategic consulting"]),
- dict(slug="bi-pipeline", t="Enterprise Data Analytics & BI Pipeline", org="Self-directed technical project", kicker="SQL · Excel · Power BI · Tableau",
-  hl=["MySQL Workbench queries & joins","Excel pivot tables & descriptive stats","Dashboards in Power BI and Tableau"],
-  prob="Corporate data often sits in relational databases while decisions are made from dashboards. This project built an end-to-end workflow connecting the two, simulating real corporate lifecycle challenges.",
-  appr=["Built relational database queries in MySQL Workbench, joining multi-layered tables to extract clean datasets.","Processed and transformed messy corporate records in Excel using dynamic Pivot Tables, logical conditions and descriptive statistics.","Modelled data connections across platforms and deployed interactive dashboards in Power BI and Tableau."],
-  find=["A repeatable pipeline from database back-end to front-end business reporting.","Keeps conclusions grounded in statistical validity rather than visual bias."],
-  sk=["SQL (MySQL)","Joins & RDBMS","Data cleansing / ETL","Excel Pivot Tables","Power BI","Tableau","Descriptive statistics"]),
- dict(slug="remote-work-london", t="Socioeconomic Dynamics of Remote Work in Greater London", org="BSc Economics · University of Hertfordshire", kicker="Econometric modelling · labour market analysis",
-  hl=["1% more overcrowding → 1.59% lower likelihood of WFH","Education a key facilitator of flexible work"],
-  prob="What determines who can work from home in Greater London? The project examined the role of housing conditions and education levels.",
-  appr=["Built an econometric model of the likelihood of working from home.","Interpreted coefficients on home overcrowding and education."],
-  find=["For every 1% increase in home overcrowding, the likelihood of working from home decreased by 1.59%.","Education was identified as a key facilitator of flexible roles.","The physical home environment matters as much as individual skills, with implications for HR strategy, urban planning and social policy."],
-  sk=["Econometric modelling","Coefficient interpretation","Labour market analysis","Analytical writing"]),
-]
-NEW = [
- dict(slug="uk-house-prices-interest-rates", t="UK House Prices vs Bank Rate (2005–2026)", kicker="Python · pandas · statsmodels · Land Registry & BoE data",
-  q="How closely do UK house prices respond to Bank of England rate changes, and with what lag?", charts=["price_vs_bank_rate.png","growth_vs_rate_change.png"], files=["analysis.py","download_data.sh","results.txt","data/uk_hpi_bankrate_clean.csv"]),
- dict(slug="uk-inflation-unemployment", t="UK Inflation, Unemployment & Bank Rate (1995–2026)", kicker="Python · ONS time series · Phillips curve",
-  q="Does the UK Phillips curve still hold, and how fast does the Bank of England react to inflation?", charts=["macro_timeseries.png","phillips_curve.png"], files=["analysis.py","download_data.sh","results.txt","data/uk_macro_clean.csv"]),
- dict(slug="uk-regional-housing-sql", t="Regional House Prices with SQL (2016–2026)", kicker="SQL · SQLite · CTEs & self-joins · Land Registry data",
-  q="Which regions and property types gained most in a decade, and where are prices still below their 2022–23 peak?", charts=["regional_growth.png","flat_vs_detached.png"], files=["queries.sql","load_and_run.py","results.md","data/regional_hpi_clean.csv"]),
-]
-OTHER = [("Comparative Evaluation of Classical and Neo-Classical Trade Theories","Ricardian vs Heckscher-Ohlin models, Leontief Paradox, H-O-V extension."),
-("AI and the Demand for Labour","Acemoglu–Restrepo task-based model: displacement, productivity and reinstatement effects; argument map."),
-("Global Value Chains & Developing Economies","Trade in tasks, the smile curve, middle-income trap, FDI and COVID-19 shocks."),
-("Macroeconomic Performance: Indicators & Trends","Real GDP growth, unemployment, inflation; cross-economy comparison; Phillips Curve trade-offs."),
-("Inflation Shocks and Institutional Responses","Central bank responses to inflation and their effect on employment and income inequality."),
-("Economic Policy & the Cost-of-Living Crisis","Junior-economist briefing for the Secretary of State; energy producers' financial data 2014–2023 and windfall taxes."),
-("Political Economy of Climate Change","Climate justice in Bangladesh and Tuvalu; loss-and-damage framework; climate migration costs."),
-("Economic Justifications for State Investment Banks","Market failures, countercyclical lending and the entrepreneurial state."),
-("Infant Industry Protection","UK, USA, Germany, Japan; trade policy vs GDP growth, 1960–80 protection vs 1980–2000 liberalisation."),
-("Neoclassical Economics in the Water Sector","Privatisation, pricing and deregulation; efficiency vs equity trade-off."),
-("Strategic & Marketing Plan: Forest Green Rovers F.C.","PESTEL, Porter's Five Forces, VRIO audit and STP marketing plan."),
-("Leadership & Organisational Development","Inclusive culture, Emotional Intelligence models and multi-generational workforce dynamics."),
-("Leadership Potential: Johari Window","Self vs peer perception, Goleman EI framework, personal development plan.")]
-FORAGE = [("BCG","Data for Decision Makers","Interpreted simulated customer behaviour data in Excel to assess conversion across audiences and channels for a consumer goods client."),
-("Deloitte Australia","Data Analytics","Classified raw corporate records in Excel and built an interactive Tableau dashboard; data modelling and forensic technology."),
-("Tata Consultancy Services","Data Visualisation","Cleaned retail revenue data and built executive-ready visuals in Tableau/Power BI; drafted strategic questions for client meetings."),
-("BCG","Introduction to Strategy Consulting","Structured creative thinking and brainstorming on revenue optimisation and repositioning for a luxury clothing brand.")]
-
-def case_page(c):
-    b = f"""<section class="hero small"><div class="wrap"><p class="kicker">{c['kicker']}</p><h1>{c['t']}</h1><p class="sub">{c['org']}</p>
-<div class="stats">{''.join(f'<div>{h}</div>' for h in c['hl'])}</div></div></section>
-<article class="wrap case"><h2>Problem</h2><p>{c['prob']}</p><h2>Approach</h2>{ul(c['appr'])}<h2>Findings</h2>{ul(c['find'])}<h2>Skills</h2>{tags(c['sk'])}
-<p class="back"><a href="../index.html#projects">← Back to all projects</a></p></article>"""
-    return page(c['t'], b, 1)
-def md_findings(slug):
-    txt = open(f"{R}/projects/{slug}/README.md").read()
-    sec = txt.split("## Findings")[1].split("**Limitations")[0]; lines=[l[2:] for l in sec.splitlines() if l.startswith("- ")]
-    lim = txt.split("**Limitations:**")[1].split("\n")[0].strip(); data = txt.split("**Data")[1].split("\n")[0].split(":**",1)[1].strip()
-    meth = txt.split("**Method")[1].split("\n")[0].split(":**",1)[1].strip()
-    import re; f = lambda s: re.sub(r"`([^`]+)`", r"<code>\1</code>", re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", s))
-    return [f(l) for l in lines], f(lim), f(data), f(meth)
-def new_page(n):
-    fs, lim, data, meth = md_findings(n['slug'])
-    imgs = "".join(f'<figure><img src="charts/{c}" alt="{c[:-4].replace("_"," ")} chart"></figure>' for c in n['charts'])
-    links = " · ".join(f'<a href="{f}">{f}</a>' for f in n['files'])
-    b = f"""<section class="hero small"><div class="wrap"><p class="kicker">New hands-on project · {n['kicker']}</p><h1>{n['t']}</h1><p class="sub">{n['q']}</p></div></section>
-<article class="wrap case"><h2>Problem</h2><p>{n['q']}</p><h2>Data</h2><p>{data}</p><h2>Approach</h2><p>{meth}</p><h2>Findings</h2>{ul(fs)}{imgs}
-<h2>Limitations</h2><p>{lim}</p><h2>Code &amp; data</h2><p>{links} · <a href="README.md">README</a></p>
-<p class="back"><a href="../../index.html#projects">← Back to all projects</a></p></article>"""
-    return page(n['t'], b, 2)
-def card(href, kicker, title, text, img=None):
-    im = f'<img src="{img}" alt="" loading="lazy">' if img else ""
-    return f'<a class="card" href="{href}">{im}<p class="kicker">{kicker}</p><h3>{title}</h3><p>{text}</p><span class="more">Read case study →</span></a>'
+<header class="nav"><div class="wrap"><a class="brand" href="{p}index.html">Kiyaga Grace Kiwanuka</a><nav id="tabs">{nav}</nav></div></header>
+<main>{body}</main><footer><div class="wrap">© 2026 Kiyaga Grace Kiwanuka · <a href="mailto:{EMAIL}">{EMAIL}</a> · <a href="{LI}">LinkedIn</a></div></footer>{extra}</body></html>"""
+TABS = [("about","About"),("hertfordshire","Hertfordshire"),("sheffield-hallam","Sheffield Hallam"),("data","Data projects"),("simulations","Simulations"),("experience","Experience"),("contact","Contact")]
+def find_tools(text): 
+    out=[]; 
+    for t in TOOLS:
+        if t.lower() in text.lower() and not any(t.lower() in o.lower() for o in out): out.append(t)
+    return out
+def detail(it):
+    n=it["n"]; ss=sents(it["summary"]); ws=sents(it["why"]); c=CBYSLUG.get(CURATED.get(n,""))
+    overview = ss[0]; ctx = c["prob"] if c else ss[0]
+    steps = c["appr"] if c else (ss[1:] or ss)
+    findings = c["find"] if c else ws[:1]
+    why = (ws[-1:] if n==19 else ws) if c else (ws[1:] or ws)
+    tools = find_tools(it["summary"]+" "+it["why"])
+    hl = "".join(f"<div>{h}</div>" for h in c["hl"]) if c else ""
+    g=group(n); back=f"../index.html#{g}"
+    b=f"""<section class="hero small"><div class="wrap"><p class="kicker">{GROUPNAME[g]}</p><h1>{esc(it['title'])}</h1>{'<div class="stats">'+hl+'</div>' if hl else ''}</div></section>
+<article class="wrap case"><nav class="toc"><a href="#overview">Overview</a><a href="#context">Context</a><a href="#method">Method</a><a href="#tools">Data &amp; tools</a><a href="#findings">Outcomes</a><a href="#why">Why it matters</a><a href="#skills">Skills</a></nav>
+<h2 id="overview">Overview</h2><p>{esc(overview)}</p>
+<h2 id="context">Context &amp; question</h2><p>{esc(ctx) if not c else ctx}</p>
+<h2 id="method">Methodology &amp; process</h2>{ul([s if c else esc(s) for s in steps],"ol")}
+<h2 id="tools">Data &amp; tools</h2>{tags(tools) if tools else '<p>Academic and secondary literature research.</p>'}
+<h2 id="findings">Findings &amp; outcomes</h2>{ul([f if c else esc(f) for f in findings])}
+<h2 id="why">Why it matters</h2>{''.join(f'<p>{esc(w)}</p>' for w in why)}
+<h2 id="skills">Skills gained</h2>{tags(it['skills'])}
+<p class="back"><a href="{back}">← Back to {dict(TABS)[g]}</a></p></article>"""
+    return page(it["title"], b, 1)
+def md_parts(slug):
+    t=open(f"{R}/projects/{slug}/README.md").read()
+    f=lambda s: re.sub(r"`([^`]+)`", r"<code>\1</code>", re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", s))
+    fs=[f(l[2:]) for l in t.split("## Findings")[1].split("**Limitations")[0].splitlines() if l.startswith("- ")]
+    one=lambda k: f(t.split(k)[1].split("\n")[0].split(":**",1)[1].strip())
+    return fs, one("**Limitations"), one("**Data"), one("**Method")
+DATA_EXTRA = {
+ "uk-house-prices-interest-rates": dict(steps=["Downloaded the HM Land Registry UK HPI full file and the Bank of England monthly average Bank Rate (IUMABEDR) with <code>download_data.sh</code>.","Filtered the HPI to the United Kingdom series and merged it with Bank Rate by month (Jan 2005 – Jul 2026).","Computed year-on-year house price growth and the 12-month change in Bank Rate.","Measured cross-correlations at 0, 6, 12, 18 and 24-month lags.","Estimated an OLS regression of price growth on the 12-month-lagged rate change with Newey-West (HAC) standard errors.","Examined the 2021–23 tightening episode and annual sales volumes; produced charts with matplotlib."], tools=["Python","pandas","statsmodels","matplotlib","HM Land Registry UK HPI","Bank of England IUMABEDR"], why="Interest-rate sensitivity of asset prices matters for lenders, housebuilders, investors and policy teams; this shows why naive correlations mislead and how lag structure changes the conclusion.", skills=["Time-series analysis","Regression (OLS, HAC errors)","Data cleaning & merging","Data visualisation","Reproducible analysis"]),
+ "uk-inflation-unemployment": dict(steps=["Downloaded ONS CPIH annual rate (L55O), ONS unemployment rate (MGSX) and Bank of England Bank Rate.","Parsed the ONS time-series CSV format to extract monthly observations and aligned all three series (Jan 1995 – Jul 2026, 379 months).","Split the sample into eras (1995–2007, 2008–2019, 2020–2026) and computed correlations and linear slopes of inflation on unemployment.","Computed correlations between inflation and Bank Rate 0–24 months later to gauge the policy reaction lag.","Visualised the series and an era-coloured Phillips curve scatter."], tools=["Python","pandas","numpy","matplotlib","ONS (L55O, MGSX)","Bank of England IUMABEDR"], why="Reading the inflation–labour market relationship correctly is central to macro, rates and economic-research roles; the analysis shows the trade-off is unstable across eras.", skills=["Macroeconomic analysis","Time-series data handling","Correlation analysis","Data visualisation"]),
+ "uk-regional-housing-sql": dict(steps=["Downloaded the HM Land Registry UK HPI full file.","Filtered to the 9 English regions plus Wales, Scotland and Northern Ireland, and loaded the cleaned table into SQLite with Python.","Wrote SQL (CTEs, self-joins on date offsets, correlated subqueries, aggregation) to compare 10-year growth, flats vs detached homes, change from the 2022–23 peak, and annual sales volumes.","Exported query results to <code>results.md</code> and charted them with matplotlib."], tools=["SQL","SQLite","Python","pandas","matplotlib","HM Land Registry UK HPI"], why="Regional and property-type differences drive lending, investment and housing-policy decisions; the project shows SQL used to answer business questions end to end.", skills=["SQL (CTEs, joins, subqueries)","Data cleaning","Regional analysis","Data visualisation"]),
+}
+def data_page(nw):
+    fs, lim, data, meth = md_parts(nw["slug"]); x=DATA_EXTRA[nw["slug"]]
+    imgs="".join(f'<figure><img src="charts/{c}" alt="{c[:-4].replace("_"," ")} chart"></figure>' for c in nw["charts"])
+    links=" · ".join(f'<a href="{f}">{f}</a>' for f in nw["files"]+["README.md"])
+    b=f"""<section class="hero small"><div class="wrap"><p class="kicker">Hands-on data project · {nw['kicker']}</p><h1>{nw['t']}</h1></div></section>
+<article class="wrap case"><nav class="toc"><a href="#overview">Overview</a><a href="#method">Method</a><a href="#tools">Data &amp; tools</a><a href="#findings">Findings</a><a href="#why">Why it matters</a><a href="#skills">Skills</a></nav>
+<h2 id="overview">Overview</h2><p>{meth}</p><h2 id="context">Context &amp; question</h2><p>{nw['q']}</p>
+<h2 id="method">Methodology &amp; process</h2>{ul(x['steps'],'ol')}<h2 id="tools">Data &amp; tools</h2><p>{data}</p>{tags(x['tools'])}
+<h2 id="findings">Findings &amp; outcomes</h2>{ul(fs)}{imgs}<p><strong>Limitations:</strong> {lim}</p>
+<h2 id="why">Why it matters</h2><p>{x['why']}</p><h2 id="skills">Skills gained</h2>{tags(x['skills'])}
+<h2>Code &amp; data</h2><p>{links}</p><p class="back"><a href="../../index.html#data">← Back to Data projects</a></p></article>"""
+    return page(nw["t"], b, 2)
+def card(href, title, text, sk):
+    return f'<a class="card" href="{href}"><h3>{esc(title)}</h3><p>{esc(text)}</p>{tags(sk[:3])}</a>'
+def oneline(it):
+    s=sents(it["summary"])[0]; return s if len(s)<150 else s[:147].rsplit(" ",1)[0]+"…"
+def grid(ns): return '<div class="grid">'+"".join(card(f"projects-detail/{slug(n)}.html", ITEMS[n]["title"], oneline(ITEMS[n]), ITEMS[n]["skills"]) for n in ns)+"</div>"
 def index():
-    feat = "".join(card(f"case-studies/{c['slug']}.html", c['kicker'], c['t'], c['hl'][0]) for c in CASES)
-    newc = "".join(card(f"projects/{n['slug']}/index.html", n['kicker'], n['t'], n['q'], f"projects/{n['slug']}/charts/{n['charts'][0]}") for n in NEW)
-    oth = "".join(f'<div class="mini"><h4>{t}</h4><p>{d}</p></div>' for t,d in OTHER)
-    fg = "".join(f'<div class="mini"><p class="kicker">{a}</p><h4>{b}</h4><p>{d}</p></div>' for a,b,d in FORAGE)
-    sk = [("Tools","SQL (MySQL, SQLite)","Excel (Pivot Tables, Solver)","Power BI","Tableau","Python (pandas, statsmodels, matplotlib)"),
-          ("Quantitative methods","OLS regression & diagnostics","Time-series analysis","Financial ratio analysis","Break-even & contribution-margin modelling","Portfolio optimisation (MPT)","Multi-criteria decision analysis & sensitivity testing"),
-          ("Research & communication","Survey design","Interviews & thematic coding","Market sizing (ONS Census)","Companies House due diligence","Executive & policy briefings","Consultancy reports")]
-    skh = "".join(f'<div class="skillcol"><h3>{s[0]}</h3>{tags(s[1:])}</div>' for s in sk)
-    b = f"""<section class="hero"><div class="wrap"><p class="kicker">Data · Business · Economic · Financial Analyst</p><h1>Kiyaga Grace Kiwanuka</h1>
-<p class="lead">Economics and sport business graduate who turns public and primary data into clear, decision-ready recommendations using SQL, Excel, Power BI, Tableau and econometrics.</p>
+    datac = "".join(card(f"projects/{nw['slug']}/index.html", nw['t'], nw['q'], DATA_EXTRA[nw['slug']]['tools'][:3]) for nw in NEW) + card(f"projects-detail/{slug(25)}.html", ITEMS[25]["title"], oneline(ITEMS[25]), ITEMS[25]["skills"])
+    sk=[("Tools",["SQL (MySQL, SQLite)","Excel (Pivot Tables, Solver)","Power BI","Tableau","Python (pandas, statsmodels)"]),("Methods",["OLS regression & diagnostics","Time-series analysis","Financial ratio analysis","Break-even modelling","Portfolio optimisation","Multi-criteria decision analysis"]),("Research",["Survey design","Interviews & thematic coding","Market sizing (ONS Census)","Companies House due diligence","Policy & executive briefings"])]
+    panels = {
+     "about": f"""<div class="about"><div><p class="lead">Economics and sport business graduate who turns public and primary data into clear, decision-ready recommendations using SQL, Excel, Power BI, Tableau and econometrics. Targeting data, business, economic and financial analyst roles.</p>
 <p class="sub">BSc Economics, University of Hertfordshire · MSc Sport Business Management, Sheffield Hallam University</p>
-<div class="cta"><a class="btn" href="#projects">View projects</a><a class="btn ghost" href="mailto:{EMAIL}">Email me</a><a class="btn ghost" href="{LI}">LinkedIn</a></div></div></section>
-<section id="skills" class="wrap"><h2>Skills</h2><div class="skills">{skh}</div></section>
-<section id="projects" class="wrap"><h2>Featured projects</h2><p class="intro">Case studies from university and consulting work, written as Problem → Approach → Findings → Skills.</p><div class="grid">{feat}</div>
-<h2 class="mt">Hands-on data projects</h2><p class="intro">Reproducible analyses on real UK public data, with code, cleaned data and charts.</p><div class="grid">{newc}</div></section>
-<section class="wrap"><h2>Forage job simulations</h2><div class="minigrid">{fg}</div></section>
-<section class="wrap"><h2>Other academic work</h2><div class="minigrid">{oth}</div></section>
-<section id="experience" class="wrap"><h2>Experience</h2><div class="job"><h3>Bartender · The Forum, Hertfordshire, UK</h3><p class="sub">Aug 2023 – Jan 2025</p>
-{ul(["Managed daily cash and digital transactions with 100% accuracy, following strict bank-out procedures.","Delivered accurate, high-quality service in a high-volume setting during peak periods.","Worked with a multicultural team to streamline bar operations, reducing waiting times.","Handled complex customer enquiries and maintained a safe, professional environment."])}</div>
-<div class="job"><h3>Education</h3>{ul(["MSc Sport Business Management, Sheffield Hallam University","BSc Economics, University of Hertfordshire"])}</div></section>
-<section id="contact" class="wrap contact"><h2>Contact</h2><p>Open to data, business, economic and financial analyst roles.</p>
-<div class="cta"><a class="btn" href="mailto:{EMAIL}">{EMAIL}</a><a class="btn ghost" href="{LI}">linkedin.com/in/kiyagakiwanuka</a></div></section>"""
-    return page("Analyst Portfolio", b, 0)
-os.makedirs(f"{R}/case-studies", exist_ok=True)
+<div class="cta"><a class="btn" href="#sheffield-hallam">Consulting projects</a><a class="btn ghost" href="#data">Data projects</a><a class="btn ghost" href="mailto:{EMAIL}">Email</a><a class="btn ghost" href="{LI}">LinkedIn</a></div></div>
+<div class="skills">{''.join(f'<div class="skillcol"><h3>{a}</h3>{tags(b)}</div>' for a,b in sk)}</div></div>""",
+     "hertfordshire": f"<h2>University of Hertfordshire <span>BSc Economics</span></h2>{grid(range(1,14))}",
+     "sheffield-hallam": f"<h2>Sheffield Hallam University <span>MSc Sport Business Management</span></h2>{grid(range(14,20))}",
+     "data": f"<h2>Data projects <span>SQL · Python · BI on real UK public data</span></h2><div class='grid'>{datac}</div>",
+     "simulations": f"<h2>Forage job simulations</h2>{grid(range(20,24))}",
+     "experience": f"""<h2>Experience</h2><div class="job"><h3>Bartender · The Forum, Hertfordshire, UK</h3><p class="sub">Aug 2023 – Jan 2025</p>{ul(["<strong>Financial accountability:</strong> managed daily cash and digital transactions with 100% accuracy, maintaining strict bank-out procedures.","<strong>Customer excellence:</strong> delivered high-quality service in a high-volume setting, ensuring order accuracy during peak periods.","<strong>Team collaboration:</strong> partnered with a multicultural team to streamline bar operations, reducing waiting times.","<strong>Conflict resolution:</strong> handled complex customer inquiries and maintained a safe, professional environment."])}</div>
+<div class="job"><h3>Education</h3>{ul(["MSc Sport Business Management, Sheffield Hallam University","BSc Economics, University of Hertfordshire"])}</div>""",
+     "contact": f"""<h2>Contact</h2><p>Open to data, business, economic and financial analyst roles.</p><div class="cta"><a class="btn solid" href="mailto:{EMAIL}">{EMAIL}</a><a class="btn solid ghostl" href="{LI}">linkedin.com/in/kiyagakiwanuka</a></div>"""}
+    body = "<div class='wrap panels'>"+"".join(f'<section id="tab-{k}" data-tab="{k}" class="panel">{panels[k]}</section>' for k,_ in TABS)+"</div>"
+    js = """<script>(function(){var ids=[...document.querySelectorAll('.panel')].map(p=>p.dataset.tab);function show(){var h=location.hash.slice(1);if(ids.indexOf(h)<0)h='about';document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.dataset.tab===h));document.querySelectorAll('#tabs a').forEach(a=>a.classList.toggle('on',a.getAttribute('href').split('#')[1]===h));window.scrollTo(0,0);}document.documentElement.classList.add('js');window.addEventListener('hashchange',show);show();})();</script>"""
+    hero = f'<section class="hero tiny"><div class="wrap"><p class="kicker">Data · Business · Economic · Financial Analyst</p><h1>Kiyaga Grace Kiwanuka</h1></div></section>'
+    return page("Analyst Portfolio", hero+body, 0, js)
+os.makedirs(f"{R}/projects-detail", exist_ok=True)
+for f in os.listdir(f"{R}/projects-detail"): os.remove(f"{R}/projects-detail/{f}")
+for n,it in ITEMS.items(): open(f"{R}/projects-detail/{slug(n)}.html","w").write(detail(it))
+for nw in NEW: open(f"{R}/projects/{nw['slug']}/index.html","w").write(data_page(nw))
 open(f"{R}/index.html","w").write(index())
-for c in CASES: open(f"{R}/case-studies/{c['slug']}.html","w").write(case_page(c))
-for n in NEW: open(f"{R}/projects/{n['slug']}/index.html","w").write(new_page(n))
-print("built")
+print("built", len(ITEMS), "detail pages")
