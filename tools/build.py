@@ -33,7 +33,7 @@ def page(title, body, depth, extra=""):
     p = "../"*depth
     nav = "".join(f'<a href="{p}index.html#{k}">{v}</a>' for k,v in TABS)
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{esc(title)} | Kiyaga Grace Kiwanuka</title><meta name="description" content="Kiyaga Grace Kiwanuka: data, business and economic analyst portfolio.">
+<title>{esc(title)} | Kiyaga Grace Kiwanuka</title><meta name="description" content="Kiyaga Grace Kiwanuka: portfolio of economics, business and data projects.">
 <link rel="stylesheet" href="{p}assets/style.css?v={VER}"></head><body>
 <header class="nav"><div class="wrap"><a class="brand" href="{p}index.html">Kiyaga Grace Kiwanuka</a><nav id="tabs">{nav}</nav></div></header>
 <main>{body}</main><footer><div class="wrap">© 2026 Kiyaga Grace Kiwanuka · <a href="mailto:{EMAIL}">{EMAIL}</a> · <a href="{LI}">LinkedIn</a></div></footer>{extra}</body></html>"""
@@ -103,7 +103,7 @@ def grid(ns): return '<div class="grid">'+"".join(card(f"projects-detail/{slug(n
 def index():
     sk=[("Tools",["SQL (MySQL)","Excel (Pivot Tables, Solver)","Power BI","Tableau"]),("Methods",["OLS regression & diagnostics","Time-series analysis","Financial ratio analysis","Break-even modelling","Portfolio optimisation","Multi-criteria decision analysis"]),("Research",["Survey design","Interviews & thematic coding","Market sizing (ONS Census)","Companies House due diligence","Policy & executive briefings"])]
     panels = {
-     "about": f"""<div class="about"><div><p class="lead">Economics and sport business graduate who turns public and primary data into clear, decision-ready recommendations using SQL, Excel, Power BI, Tableau and econometrics. Targeting data, business, economic and financial analyst roles.</p>
+     "about": f"""<div class="about"><div><p class="lead">Economics and sport business graduate who turns public and primary data into clear, decision-ready recommendations using SQL, Excel, Power BI, Tableau and econometrics.</p>
 <p class="sub">BSc Economics, University of Hertfordshire · MSc Sport Business Management, Sheffield Hallam University</p>
 <div class="cta"><a class="btn" href="#sheffield-hallam">Consulting projects</a><a class="btn ghost" href="#hertfordshire">Economics projects</a><a class="btn ghost" href="mailto:{EMAIL}">Email</a><a class="btn ghost" href="{LI}">LinkedIn</a></div></div>
 <div class="skills">{''.join(f'<div class="skillcol"><h3>{a}</h3>{tags(b)}</div>' for a,b in sk)}</div></div>""",
@@ -112,11 +112,11 @@ def index():
      "simulations": f"<h2>Forage job simulations</h2>{grid(range(20,24))}<h2>Technical project</h2>{grid([25])}",
      "experience": f"""<h2>Experience</h2><div class="job"><h3>Bartender · The Forum, Hertfordshire, UK</h3><p class="sub">Aug 2023 – Jan 2025</p>{ul(["<strong>Financial accountability:</strong> managed daily cash and digital transactions with 100% accuracy, maintaining strict bank-out procedures.","<strong>Customer excellence:</strong> delivered high-quality service in a high-volume setting, ensuring order accuracy during peak periods.","<strong>Team collaboration:</strong> partnered with a multicultural team to streamline bar operations, reducing waiting times.","<strong>Conflict resolution:</strong> handled complex customer inquiries and maintained a safe, professional environment."])}</div>
 <div class="job"><h3>Education</h3>{ul(["MSc Sport Business Management, Sheffield Hallam University","BSc Economics, University of Hertfordshire"])}</div>""",
-     "contact": f"""<h2>Contact</h2><p>Open to data, business, economic and financial analyst roles.</p><div class="cta"><a class="btn solid" href="mailto:{EMAIL}">{EMAIL}</a><a class="btn solid ghostl" href="{LI}">linkedin.com/in/kiyagakiwanuka</a></div>"""}
+     "contact": f"""<h2>Contact</h2><p>Get in touch by email or LinkedIn.</p><div class="cta"><a class="btn solid" href="mailto:{EMAIL}">{EMAIL}</a><a class="btn solid ghostl" href="{LI}">linkedin.com/in/kiyagakiwanuka</a></div>"""}
     body = "<div class='wrap panels'>"+"".join(f'<section id="tab-{k}" data-tab="{k}" class="panel">{panels[k]}</section>' for k,_ in TABS)+"</div>"
     js = """<style>"""+MODAL_CSS+"""</style><div id="pm" class="pm" data-v="@@CVER@@" aria-hidden="true" hidden><div class="pm-backdrop"></div><div class="pm-dialog" role="dialog" aria-modal="true" aria-labelledby="pm-title"><button class="pm-close" type="button" aria-label="Close project details">×</button><div class="pm-body" tabindex="-1"></div></div></div><script src="assets/app.js?v="""+VER+""""></script>"""
-    hero = f'<section class="hero tiny"><div class="wrap"><p class="kicker">Data · Business · Economic · Financial Analyst</p><h1>Kiyaga Grace Kiwanuka</h1></div></section>'
-    return page("Analyst Portfolio", hero+body, 0, js)
+    hero = f'<section class="hero tiny"><div class="wrap"><p class="kicker">Economics · Business · Data</p><h1>Kiyaga Grace Kiwanuka</h1></div></section>'
+    return page("Portfolio", hero+body, 0, js)
 os.makedirs(f"{R}/projects-detail", exist_ok=True)
 for f in os.listdir(f"{R}/projects-detail"): os.remove(f"{R}/projects-detail/{f}")
 for n,it in ITEMS.items(): open(f"{R}/projects-detail/{slug(n)}.html","w").write(detail(it))

@@ -20,7 +20,7 @@ R[1] = dict(
       "Specified and estimated an OLS regression of prices on the chosen determinants.",
       "Interpreted coefficient signs and significance against the theoretical expectations.",
       "Ran diagnostic checks for multicollinearity and heteroskedasticity before relying on the results."],
- emp=["Analyst roles depend on knowing when a model can be trusted. Diagnostics-first regression work is exactly the habit that stops a convincing-looking chart from driving a bad decision on lending, pricing or investment."])
+ emp=["Sound analysis depends on knowing when a model can be trusted. Diagnostics-first regression work is exactly the habit that stops a convincing-looking chart from driving a bad decision on lending, pricing or investment."])
 R[2] = dict(
  ctx="Remote work is often discussed as a question of job type or individual skill. This project tested a less visible constraint: whether people have the physical space at home to work at all.",
  con=[("Coefficient interpretation","In a regression, a coefficient measures the expected change in the outcome for a one-unit change in an explanatory variable, holding other factors constant; interpreting it correctly (units, direction, significance) is what turns a model into a usable statement."),
@@ -254,4 +254,4 @@ R[25] = dict(
       ("ETL","Extract, Transform, Load: pulling data from sources, cleaning and reshaping it, and loading it where it can be analysed."),
       ("Descriptive statistics","Means, medians, spread and counts that summarise data and catch anomalies before visualisation."),
       ("BI data modelling","Defining the relationships between tables inside Power BI or Tableau so that filters and measures aggregate correctly.")],
- emp=["Most analyst roles span exactly this chain. Being able to own it end to end means fewer hand-offs and fewer places for errors to creep in."])
+ emp=["Much day-to-day analytical work spans exactly this chain. Being able to own it end to end means fewer hand-offs and fewer places for errors to creep in."])
