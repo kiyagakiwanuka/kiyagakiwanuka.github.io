@@ -10,7 +10,8 @@ def get(p):
         return urllib.request.urlopen(urllib.request.Request(f"{base.rstrip('/')}/{p}?nocache={time.time()}",headers={"Cache-Control":"no-cache"})).read().decode()
     return open(os.path.join(base,p)).read()
 norm=lambda s:re.sub(r"\s+"," ",re.sub(r"[^\w\s]"," ",html.unescape(re.sub("<[^>]+>"," ",s)).lower())).strip()
-W=lambda s:set(norm(s).split())
+STOP=set("a an the and or of to in on for by with from at as is are was were be it its this that these those their his her into than then so such can may how what which who do does across over between before after each".split())
+W=lambda s:set(norm(s).split())-STOP
 total=0
 for p in paths:
     a=get(p); a=a[a.find("<article"):]
@@ -26,7 +27,7 @@ for p in paths:
         for x in s1:
             for y in s2:
                 a1,b1=norm(x),norm(y); wa,wb=W(x),W(y)
-                if a1==b1 or a1 in b1 or b1 in a1 or len(wa&wb)/max(1,min(len(wa),len(wb)))>0.6:
+                if a1==b1 or (len(a1)>25 and a1 in b1) or (len(b1)>25 and b1 in a1) or (len(wa&wb)>=4 and len(wa&wb)/max(1,min(len(wa),len(wb)))>0.6):
                     issues.append(f"  [{n1}] vs [{n2}]: {a1[:80]}")
     total+=len(issues)
     print(("DUP " if issues else "ok  ")+p); [print(i) for i in issues]

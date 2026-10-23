@@ -1,6 +1,7 @@
 """Generates all static pages from tools/source.md (the skills file, minus excluded items) + tools/content.py.
 Run: python3 tools/build.py   (output is committed; hosting needs no build step)
 Future: add a 'Passion projects / Skills highlights' tab by appending to TABS and writing its panel in index()."""
+from rich import R as RICH
 import os, re, html, sys
 sys.path.insert(0, os.path.dirname(__file__)); from content import CASES, NEW
 R = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -43,13 +44,18 @@ def find_tools(text):
         if t.lower() in text.lower() and not any(t.lower() in o.lower() for o in out): out.append(t)
     return out
 def _w(t): return set(re.findall(r"[a-z0-9]+", re.sub(r"<[^>]+>","",t).lower()))
+STOP=set("a an the and or of to in on for by with from at as is are was were be it its this that these those their his her into than then so such can may how what which who do does across over between before after each".split())
+def _near(w,x):
+    # near-identical: >60% of the shorter sentence's content words reappear, and at least 4 of them
+    cw,cx=w-STOP,x-STOP; o=len(cw&cx)
+    return o>=4 and o/max(1,min(len(cw),len(cx)))>0.6
 def _ss(t): return [x for x in re.split(r"(?<=[.!?])\s+", re.sub(r"<[^>]+>","",t)) if len(_w(x))>=4]
 def _n(t): return " ".join(sorted(_w(t)))
 def _dup(t, seen):
     # seen: list of word-sets, one per previously rendered sentence
     for s in _ss(t) or [t]:
         w=_w(s)
-        if any(x and (w<=x or x<=w or len(w & x)/max(1,min(len(w),len(x)))>0.6) for x in seen): return True
+        if any(x and _near(w,x) for x in seen): return True
     return False
 def _add(seen, t): seen.extend(_w(s) for s in (_ss(t) or [t]))
 def CVER():
@@ -60,12 +66,18 @@ def CVER():
 def detail(it):
     n=it["n"]; ss=sents(it["summary"]); ws=sents(it["why"]); c=CBYSLUG.get(CURATED.get(n,""))
     E = (lambda x: x) if c else esc
+    r=RICH.get(n,{})
+    ctx=[c["prob"] if c else esc(r["q"])] if (c or r.get("q")) else []
+    ctx+= [esc(r["ctx"])] if r.get("ctx") else []
+    con=[f"<strong>{esc(a)}</strong>: {esc(b)}" for a,b in r.get("con",[])]
+    meth=c["appr"] if c else [esc(x) for x in r["app"]] if r.get("app") else [esc(x) for x in ss[1:]]
     secs = [("overview","Overview","p",[esc(ss[0])]),
-            ("context","Context &amp; question","p",[c["prob"]] if c else []),
-            ("method","Methodology &amp; process","ol",[E(x) for x in (c["appr"] if c else ss[1:])]),
+            ("context","Context &amp; question","p",ctx),
+            ("concepts","Key concepts","ul",con),
+            ("method","Methodology &amp; process","ol",[E(x) for x in meth] if c else meth),
             ("tools","Data &amp; tools","tags",find_tools(it["summary"]+" "+it["why"])),
-            ("findings","Findings &amp; outcomes","ul",[E(x) for x in (c["find"] if c else ws[:1])]),
-            ("why","Why it matters","p",[esc(x) for x in (ws if c else ws[1:])]),
+            ("findings","Findings &amp; outcomes","ul",[E(x) for x in c["find"]] if c else [] if r.get("app") else [esc(x) for x in ss[1:]]),
+            ("why","Why it matters","p",[esc(x) for x in ws]+[esc(x) for x in r.get("emp",[])]),
             ("skills","Skills gained","tags",it["skills"])]
     seen=[]; out=[]; toc=[]
     for sid,name,kind,items in secs:
@@ -74,7 +86,7 @@ def detail(it):
             for x in items: _add(seen,x)
         if not items: continue
         body = tags(items) if kind=="tags" else ul(items,kind) if kind in("ul","ol") else "".join(f"<p>{x}</p>" for x in items)
-        out.append(f'<h2 id="{sid}">{name}</h2>{body}'); toc.append(f'<a href="#{sid}">{name.split(" &amp;")[0]}</a>')
+        out.append(f'<h2 id="{sid}">{name}</h2>{body}'); toc.append(f'<a href="#{sid}">{name.split(" &amp;")[0].replace("Key concepts","Concepts")}</a>')
     hl = "".join(f"<div>{h}</div>" for h in c["hl"]) if c else ""
     g=group(n); back=f"../index.html#{g}"
     b=f"""<section class="hero small"><div class="wrap"><p class="kicker">{GROUPNAME[g]}</p><h1>{esc(it['title'])}</h1>{'<div class="stats">'+hl+'</div>' if hl else ''}</div></section>
